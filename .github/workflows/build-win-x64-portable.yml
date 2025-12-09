@@ -1,0 +1,96 @@
+name: Build Windows x64 Portable
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  build-win-x64:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v6
+
+      - name: Install Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install corepack
+        run: corepack enable && corepack prepare yarn@4.9.1 --activate
+
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        shell: bash
+        run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
+
+      - name: Cache yarn dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ steps.yarn-cache-dir-path.outputs.dir }}
+            node_modules
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: Cache Electron
+        uses: actions/cache@v4
+        with:
+          path: ~/AppData/Local/electron/Cache
+          key: ${{ runner.os }}-electron-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-electron-
+
+      - name: Cache electron-builder
+        uses: actions/cache@v4
+        with:
+          path: ~/AppData/Local/electron-builder/Cache
+          key: ${{ runner.os }}-electron-builder-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-electron-builder-
+
+      - name: Install Dependencies
+        run: yarn install
+
+      - name: Generate date tag
+        id: date
+        shell: bash
+        run: echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+
+      - name: Build Windows x64 Portable
+        run: yarn build:win --x64 --portable
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_OPTIONS: --max-old-space-size=8192
+
+      - name: Rename artifact
+        shell: bash
+        run: |
+          mkdir -p renamed-artifacts
+          DATE=${{ steps.date.outputs.date }}
+          find dist -name "*-x64-portable.exe" -exec cp {} renamed-artifacts/cherry-studio-${DATE}-x64-portable.exe \;
+
+      - name: Generate SHA256 checksum
+        shell: pwsh
+        run: |
+          cd renamed-artifacts
+          echo "# SHA256 checksum - $(Get-Date -Format 'yyyy-MM-dd')" > SHA256SUMS.txt
+          Get-ChildItem -File | Where-Object { $_.Name -ne 'SHA256SUMS.txt' } | ForEach-Object {
+            $file = $_.Name
+            $hash = (Get-FileHash -Algorithm SHA256 $file).Hash.ToLower()
+            Add-Content -Path SHA256SUMS.txt -Value "$hash  $file"
+          }
+          cat SHA256SUMS.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: cherry-studio-${{ steps.date.outputs.date }}-win-x64-portable
+          path: renamed-artifacts/*
+          retention-days: 7
+          compression-level: 8
