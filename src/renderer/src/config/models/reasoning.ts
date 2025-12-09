@@ -38,6 +38,7 @@ export const MODEL_SUPPORTED_REASONING_EFFORT: ReasoningEffortConfig = {
   grok4_fast: ['auto'] as const,
   gemini: ['low', 'medium', 'high', 'auto'] as const,
   gemini3: ['low', 'medium', 'high'] as const,
+  gemini3_gateway: ['low', 'high'] as const,
   gemini_pro: ['low', 'medium', 'high', 'auto'] as const,
   qwen: ['low', 'medium', 'high'] as const,
   qwen_thinking: ['low', 'medium', 'high'] as const,
@@ -65,6 +66,7 @@ export const MODEL_SUPPORTED_OPTIONS: ThinkingOptionConfig = {
   gemini: ['none', ...MODEL_SUPPORTED_REASONING_EFFORT.gemini] as const,
   gemini_pro: MODEL_SUPPORTED_REASONING_EFFORT.gemini_pro,
   gemini3: MODEL_SUPPORTED_REASONING_EFFORT.gemini3,
+  gemini3_gateway: MODEL_SUPPORTED_REASONING_EFFORT.gemini3_gateway,
   qwen: ['none', ...MODEL_SUPPORTED_REASONING_EFFORT.qwen] as const,
   qwen_thinking: MODEL_SUPPORTED_REASONING_EFFORT.qwen_thinking,
   doubao: ['none', ...MODEL_SUPPORTED_REASONING_EFFORT.doubao] as const,
@@ -116,7 +118,12 @@ const _getThinkModelType = (model: Model): ThinkingModelType => {
       thinkingModelType = 'gemini_pro'
     }
     if (isGemini3ThinkingTokenModel(model)) {
-      thinkingModelType = 'gemini3'
+      // Special handling for google/gemini-3-pro-preview via AI Gateway
+      if (model.id === 'google/gemini-3-pro-preview') {
+        thinkingModelType = 'gemini3_gateway'
+      } else {
+        thinkingModelType = 'gemini3'
+      }
     }
   } else if (isSupportedReasoningEffortGrokModel(model)) thinkingModelType = 'grok'
   else if (isSupportedThinkingTokenQwenModel(model)) {

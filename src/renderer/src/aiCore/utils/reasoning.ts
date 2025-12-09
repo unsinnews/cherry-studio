@@ -535,24 +535,6 @@ export function getAnthropicReasoningParams(
 type GoogleThinkingLevel = NonNullable<GoogleGenerativeAIProviderOptions['thinkingConfig']>['thinkingLevel']
 
 /**
- * Map reasoning effort to Gemini thinking level (two levels: low/high)
- * Used specifically for google/gemini-3-pro-preview model via AI Gateway
- */
-function mapToGeminiThinkingLevel(reasoningEffort: string | undefined): GoogleThinkingLevel {
-  switch (reasoningEffort) {
-    case 'low':
-    case 'minimal':
-      return 'low'
-    case 'medium':
-    case 'high':
-    case 'auto':
-      return 'high'
-    default:
-      return 'high'
-  }
-}
-
-/**
  * 获取 Gemini 推理参数
  * 从 GeminiAPIClient 中提取的逻辑
  * 注意：Gemini/GCP 端点所使用的 thinkingBudget 等参数应该按照驼峰命名法传递
@@ -580,12 +562,12 @@ export function getGeminiReasoningParams(
     }
 
     // Special handling for google/gemini-3-pro-preview via AI Gateway
-    // Use thinkingLevel (low/high) instead of thinkingBudget
+    // Use thinkingLevel (low/high) directly instead of thinkingBudget
     // https://ai.google.dev/gemini-api/docs/gemini-3?thinking=high#new_api_features_in_gemini_3
     if (model.id === 'google/gemini-3-pro-preview') {
       return {
         thinkingConfig: {
-          thinkingLevel: mapToGeminiThinkingLevel(reasoningEffort),
+          thinkingLevel: reasoningEffort as GoogleThinkingLevel,
           includeThoughts: true
         }
       }

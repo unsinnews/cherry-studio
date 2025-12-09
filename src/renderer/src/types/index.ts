@@ -94,6 +94,7 @@ const ThinkModelTypes = [
   'gemini',
   'gemini_pro',
   'gemini3',
+  'gemini3_gateway',
   'qwen',
   'qwen_thinking',
   'doubao',
