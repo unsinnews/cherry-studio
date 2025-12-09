@@ -29,19 +29,8 @@ jobs:
             gh api repos/$REPO/actions/artifacts/$artifact_id -X DELETE
           done
 
-  check-repository:
-    runs-on: ubuntu-latest
-    outputs:
-      should_run: ${{ github.repository == 'CherryHQ/cherry-studio' }}
-    steps:
-      - name: Check if running in main repository
-        run: |
-          echo "Running in repository: ${{ github.repository }}"
-          echo "Should run: ${{ github.repository == 'CherryHQ/cherry-studio' }}"
-
   nightly-build:
-    needs: check-repository
-    if: needs.check-repository.outputs.should_run == 'true'
+    needs: cleanup-artifacts
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -52,8 +41,6 @@ jobs:
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v6
-        with:
-          ref: main
 
       - name: Install Node.js
         uses: actions/setup-node@v6
@@ -217,7 +204,7 @@ jobs:
 
   Build-Summary:
     needs: nightly-build
-    if: always()
+    if: always() && needs.nightly-build.result != 'skipped'
     runs-on: ubuntu-latest
     steps:
       - name: Get date tag
