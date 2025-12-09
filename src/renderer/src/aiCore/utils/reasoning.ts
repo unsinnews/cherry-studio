@@ -532,20 +532,25 @@ export function getAnthropicReasoningParams(
   return {}
 }
 
-// type GoogleThinkingLevel = NonNullable<GoogleGenerativeAIProviderOptions['thinkingConfig']>['thinkingLevel']
+type GoogleThinkingLevel = NonNullable<GoogleGenerativeAIProviderOptions['thinkingConfig']>['thinkingLevel']
 
-// function mapToGeminiThinkingLevel(reasoningEffort: ReasoningEffortOption): GoogelThinkingLevel {
-//   switch (reasoningEffort) {
-//     case 'low':
-//       return 'low'
-//     case 'medium':
-//       return 'medium'
-//     case 'high':
-//       return 'high'
-//     default:
-//       return 'medium'
-//   }
-// }
+/**
+ * Map reasoning effort to Gemini thinking level (two levels: low/high)
+ * Used specifically for google/gemini-3-pro-preview model via AI Gateway
+ */
+function mapToGeminiThinkingLevel(reasoningEffort: string | undefined): GoogleThinkingLevel {
+  switch (reasoningEffort) {
+    case 'low':
+    case 'minimal':
+      return 'low'
+    case 'medium':
+    case 'high':
+    case 'auto':
+      return 'high'
+    default:
+      return 'high'
+  }
+}
 
 /**
  * 获取 Gemini 推理参数
@@ -574,15 +579,17 @@ export function getGeminiReasoningParams(
       }
     }
 
-    // TODO: 很多中转还不支持
+    // Special handling for google/gemini-3-pro-preview via AI Gateway
+    // Use thinkingLevel (low/high) instead of thinkingBudget
     // https://ai.google.dev/gemini-api/docs/gemini-3?thinking=high#new_api_features_in_gemini_3
-    // if (isGemini3ThinkingTokenModel(model)) {
-    //   return {
-    //     thinkingConfig: {
-    //       thinkingLevel: mapToGeminiThinkingLevel(reasoningEffort)
-    //     }
-    //   }
-    // }
+    if (model.id === 'google/gemini-3-pro-preview') {
+      return {
+        thinkingConfig: {
+          thinkingLevel: mapToGeminiThinkingLevel(reasoningEffort),
+          includeThoughts: true
+        }
+      }
+    }
 
     const effortRatio = EFFORT_RATIO[reasoningEffort]
 

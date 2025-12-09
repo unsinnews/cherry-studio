@@ -758,6 +758,93 @@ describe('reasoning utils', () => {
         }
       })
     })
+
+    it('should use thinkingLevel for google/gemini-3-pro-preview model with low effort', async () => {
+      const { isReasoningModel, isSupportedThinkingTokenGeminiModel } = await import('@renderer/config/models')
+
+      vi.mocked(isReasoningModel).mockReturnValue(true)
+      vi.mocked(isSupportedThinkingTokenGeminiModel).mockReturnValue(true)
+
+      const model: Model = {
+        id: 'google/gemini-3-pro-preview',
+        name: 'Gemini 3 Pro Preview',
+        provider: SystemProviderIds.gateway
+      } as Model
+
+      const assistant: Assistant = {
+        id: 'test',
+        name: 'Test',
+        settings: {
+          reasoning_effort: 'low'
+        }
+      } as Assistant
+
+      const result = getGeminiReasoningParams(assistant, model)
+      expect(result).toEqual({
+        thinkingConfig: {
+          thinkingLevel: 'low',
+          includeThoughts: true
+        }
+      })
+    })
+
+    it('should use thinkingLevel for google/gemini-3-pro-preview model with high effort', async () => {
+      const { isReasoningModel, isSupportedThinkingTokenGeminiModel } = await import('@renderer/config/models')
+
+      vi.mocked(isReasoningModel).mockReturnValue(true)
+      vi.mocked(isSupportedThinkingTokenGeminiModel).mockReturnValue(true)
+
+      const model: Model = {
+        id: 'google/gemini-3-pro-preview',
+        name: 'Gemini 3 Pro Preview',
+        provider: SystemProviderIds.gateway
+      } as Model
+
+      const assistant: Assistant = {
+        id: 'test',
+        name: 'Test',
+        settings: {
+          reasoning_effort: 'high'
+        }
+      } as Assistant
+
+      const result = getGeminiReasoningParams(assistant, model)
+      expect(result).toEqual({
+        thinkingConfig: {
+          thinkingLevel: 'high',
+          includeThoughts: true
+        }
+      })
+    })
+
+    it('should use thinkingLevel high for google/gemini-3-pro-preview model with medium effort', async () => {
+      const { isReasoningModel, isSupportedThinkingTokenGeminiModel } = await import('@renderer/config/models')
+
+      vi.mocked(isReasoningModel).mockReturnValue(true)
+      vi.mocked(isSupportedThinkingTokenGeminiModel).mockReturnValue(true)
+
+      const model: Model = {
+        id: 'google/gemini-3-pro-preview',
+        name: 'Gemini 3 Pro Preview',
+        provider: SystemProviderIds.gateway
+      } as Model
+
+      const assistant: Assistant = {
+        id: 'test',
+        name: 'Test',
+        settings: {
+          reasoning_effort: 'medium'
+        }
+      } as Assistant
+
+      const result = getGeminiReasoningParams(assistant, model)
+      expect(result).toEqual({
+        thinkingConfig: {
+          thinkingLevel: 'high',
+          includeThoughts: true
+        }
+      })
+    })
   })
 
   describe('getXAIReasoningParams', () => {
